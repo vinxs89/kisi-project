@@ -1,17 +1,43 @@
+import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@material-ui/core";
 import { Lock } from "../Types"
+import { LockRow } from "./LockRow";
 
 type LocksProps = {
-    locks: Lock[];
+    locks: Lock[] | null | 'Loading';
 }
 
 export const Locks = ({ locks }: LocksProps) => {
+    let content;
+    if(locks === null) {
+        content = 'Select a place';
+    } else if(locks === 'Loading') {
+        content = 'Loading...';
+    } else if (locks.length === 0) {
+        content = 'No locks created';
+    } else {
+        content = (
+            <TableContainer component={Paper}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell>Unlock</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {
+                            locks.map(lock => <LockRow key={lock.id} lock={lock} />)
+                        }
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        )
+    }
+
     return (
-        <div>
-            {
-                locks.map(lock => (
-                    <div>{lock.name}</div>
-                ))
-            }
-        </div>
+        <Box>
+            {content}
+        </Box>
     )
 }

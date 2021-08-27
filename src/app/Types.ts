@@ -35,3 +35,12 @@ export type Pagination = {
     limit: number;
     count: number;
 }
+
+export type Event = {
+    id: string;
+    createdAt: string;
+    action: string;
+    objectName: string;
+    success: boolean;
+    message: string;
+}
