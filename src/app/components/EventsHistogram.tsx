@@ -112,7 +112,7 @@ const buildHistogramData = (events: Event[], bars: number): HistogramInfo => {
 
   return {
     items: histogramData,
-    yLegend: distributeElements(0, maxValue, 4).reverse(),
+    yLegend: [...new Set(distributeElements(0, maxValue, 4))].reverse(),
     xLegend: distributeElements(firstTimestamp, lastTimestamp, 2),
     maxValue
   };
