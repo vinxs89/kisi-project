@@ -2,22 +2,22 @@ import { useEffect, useState } from "react"
 import Kisi from '../KisiWrapper';
 
 export const useLogin = () => {
-  const [authenticated, setAuthenticated] = useState(undefined as unknown as boolean);
+  const [userId, setUserId] = useState(undefined as unknown as  string | null);
 
   const notifyLogout = () => {
-    setAuthenticated(false);
+    setUserId(null);
   };
 
-  const notifyLogin = () => {
-    setAuthenticated(true);
+  const notifyLogin = (userId: string) => {
+    setUserId(userId);
   };
 
   useEffect(() => {
     Kisi.verifyAuthentication()
-      .then(setAuthenticated)
+      .then(setUserId)
       .catch(e => {
         console.error(e);
-        setAuthenticated(false);
+        setUserId(null);
       });
 
     Kisi.onLogout(notifyLogout);
@@ -29,5 +29,5 @@ export const useLogin = () => {
     }
   }, []);
 
-  return authenticated;
+  return userId;
 }

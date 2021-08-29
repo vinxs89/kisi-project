@@ -1,72 +1,102 @@
-import { Box, Container } from "@material-ui/core";
+import { Box, Button, Container } from "@material-ui/core";
 import { useEffect, useState } from "react";
 import { EventsLog } from "../components/EventsLog";
-import { Locks } from "../components/Locks";
-import { Lock, Place, PlacePagination } from "../Types";
-import Kisi from '../KisiWrapper';
+import { Event, Lock, Place, PlacePagination } from "../Types";
 import { PlaceSelector } from "../components/PlaceSelector";
 import { EventsHistogram } from "../components/EventsHistogram";
+import Kisi from '../KisiWrapper';
+import { useStyles } from "../Styles";
+import { Locks } from "../components/Locks";
 
-export const Main = () => {
-    const [placePagination, updatePlacePagination] = useState(null as unknown as PlacePagination);
+type MainProps = {
+    userId: string;
+}
+
+export const Main = ({userId}: MainProps) => {
+    const classes = useStyles();
+    const [placePagination, updatePlacePagination] = useState('Loading' as unknown as PlacePagination | 'Loading');
     const [locks, updateLocks] = useState(null as unknown as Lock[] | null | 'Loading');
-    const [events, updateEvents] = useState(null as unknown as any | null | 'Loading') ;
-    const [selectedPlace, updateSelectedPlace] = useState(null as unknown as Place);
+    const [events, updateEvents] = useState(null as unknown as Event[] | null | 'Loading') ;
+    const [selectedPlace, updateSelectedPlace] = useState(null as Place | null);
 
     useEffect(() => {
-        Kisi.getPlaces()
-            .then(updatePlacePagination)
-            .catch(console.error);
-        /*
-        try {
-            const response = await Kisi.unlock(locks.data[1].id);
-            console.log(response);
-        } catch(e) {
-            console.error(e);
-        }
-        */
-    }, []);
+        refreshPlaces();
+    }, [userId]);
 
     useEffect(() => {
         if(!selectedPlace) {
-            return;
+            updateLocks(null);
+            updateEvents(null);
+        } else {
+            refreshLocks(selectedPlace.id);
+            refreshEvents(selectedPlace.id);
         }
+    }, [selectedPlace]);
 
+    const refreshPlaces = () => {
+        updatePlacePagination('Loading');
+        Kisi.getPlaces()
+            .then(updatePlacePagination)
+            .catch(console.error);
+    }
+
+    const refreshLocks = (placeId: string) => {
         updateLocks('Loading');
-        updateEvents('Loading');
-        Kisi.getLocks(selectedPlace.id)
+        Kisi.getLocks(placeId)
             .then(pagination => {
                 updateLocks(pagination.data);
             })
             .catch(console.error);
-        
-        let intervalId = setInterval(() => {
-            Kisi.getUnlockEvents(selectedPlace.id, '66949991')
-                .then(updateEvents)
-                .catch(console.error);
-        }, 5000);
+    }
 
-        return () => {
-            clearInterval(intervalId);
-        }
-    }, [selectedPlace]);
+    const refreshEvents = (placeId: string) => {
+        updateEvents('Loading');
+        Kisi.getUnlockEvents(placeId, userId)
+            .then(updateEvents)
+            .catch(console.error);
+    }
 
     return (
         <Container>
-            <h4>Places</h4>
-            <Box border='1px solid #ccc' padding='20px' marginTop='20px'>
-                <PlaceSelector placePagination={placePagination} handleSelectedPlace={updateSelectedPlace} />
+            <Box className={classes.section__title}>
+                <h4>Places</h4>
+                <Button onClick={() => refreshPlaces()}>Refresh</Button>
+            </Box>
+            <Box className={classes.section__content}>
+                {
+                (placePagination === 'Loading') ? (<p>Loading...</p>)
+                   : (placePagination.pagination.count === 0) ? (<p>No place to show, create one first</p>)
+                   : <PlaceSelector placePagination={placePagination} handleSelectedPlace={updateSelectedPlace} />
+                }
             </Box>
 
-            <h4>Locks</h4>
-            <Box marginTop='20px'>
-                <Locks locks={locks} />
+            <Box className={classes.section__title}>
+                <h4>Locks</h4>
+                { selectedPlace && <Button onClick={() => refreshLocks(selectedPlace.id)}>Refresh</Button> }
+            </Box>
+            <Box className={classes.section__content}>
+                {
+                   (locks === null) ? (<p>Select a place</p>)
+                   : (locks === 'Loading') ? (<p>Loading...</p>)
+                   : <Locks locks={locks} />
+                }
             </Box>
 
-            <h4>Events</h4>
-            <Box marginTop='20px'>
-                <EventsHistogram events={events} />
-                <EventsLog events={events} />
+            <Box className={classes.section__title}>
+                <h4>Events</h4>
+                { selectedPlace && <Button onClick={() => refreshEvents(selectedPlace.id)}>Refresh</Button> }
+            </Box>
+            <Box className={classes.section__content}>
+                {
+                   (events === null) ? (<p>Select a place</p>)
+                   : (events === 'Loading') ? (<p>Loading...</p>)
+                   : (
+                       <Box>
+                            <EventsHistogram events={events} bars={25} />
+                            <EventsLog events={events} />
+                       </Box>
+                    )
+                }
             </Box>
         </Container>
     )

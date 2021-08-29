@@ -3,16 +3,12 @@ import { Lock } from "../Types"
 import { LockRow } from "./LockRow";
 
 type LocksProps = {
-    locks: Lock[] | null | 'Loading';
+    locks: Lock[];
 }
 
 export const Locks = ({ locks }: LocksProps) => {
     let content;
-    if(locks === null) {
-        content = 'Select a place';
-    } else if(locks === 'Loading') {
-        content = 'Loading...';
-    } else if (locks.length === 0) {
+    if (locks.length === 0) {
         content = 'No locks created';
     } else {
         content = (

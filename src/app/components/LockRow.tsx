@@ -13,7 +13,7 @@ export const LockRow = ({ lock }: LockRowProps) => {
   const onUnlock = async (lock: Lock) => {
     updateStatus('In progress');
     try {
-      const res = await Kisi.unlock(lock.id);
+      await Kisi.unlock(lock.id);
       updateStatus('Unlocked');
     } catch(e) {
       updateStatus('Failed');

@@ -1,8 +1,10 @@
-import { Box } from "@material-ui/core"
+import { Box, Chip } from "@material-ui/core"
+import { useStyles } from "../Styles";
 import { Event } from "../Types";
 
 type EventsLogProps = {
-  events: Event[] | null | 'Loading';
+  events: Event[];
+  bars: number;
 }
 
 type HistogramItem = {
@@ -13,7 +15,49 @@ type HistogramItem = {
 
 type HistogramInfo = {
   items: HistogramItem[];
+  yLegend: number[],
+  xLegend: number[],
   maxValue: number;
+}
+
+export const EventsHistogram = ({ events, bars }: EventsLogProps) => {
+  const classes = useStyles();
+    
+  //events = mockSomeEvents(events, 120);
+  const histogramInfo = buildHistogramData(events, bars);
+
+  return (
+    <Box className={classes.histogram}>
+      <Box className={classes.histogram__top}>
+        <Box className={classes.histogram__legendY}>
+          { 
+            histogramInfo.yLegend.map(y => (
+              <p key={y} style={{margin: 0}}>{y}</p>
+            ))
+          }
+        </Box>
+        {
+          histogramInfo.items.map((bar, index) => (
+            <Box key={index} className={classes.histogram__barWrapper}>
+              {
+                bar.success > 0 && <Box style={{border: '1px solid #a7c7f9', backgroundColor: '#d2e3fc', borderTopLeftRadius: '5px', borderTopRightRadius: '5px'}} margin="1px 2px" height={calculateHeight(bar.success, histogramInfo.maxValue)}></Box>
+              }
+              {
+                bar.failure > 0 && <Box style={{border: '1px solid #c96c6d', backgroundColor: '#d93124', borderTopLeftRadius: bar.success === 0 ? '5px' : 0, borderTopRightRadius: bar.success === 0 ? '5px' : 0}} margin="1px 2px" height={calculateHeight(bar.failure, histogramInfo.maxValue)}></Box>
+              }
+            </Box>
+          ))
+        }
+      </Box>
+      <Box className={classes.histogram__bottom}>
+        {
+          histogramInfo.xLegend.map(timestamp => (
+            <Chip className={classes.histogram__dateChip} key={timestamp} label={new Date(timestamp).toLocaleDateString()} variant="outlined" />
+          ))
+        }
+      </Box>
+    </Box>
+  )
 }
 
 const getRandomInt = (min: number, max: number): number => {
@@ -25,11 +69,6 @@ const getRandomInt = (min: number, max: number): number => {
 const buildHistogramData = (events: Event[], bars: number): HistogramInfo => {
   const firstTimestamp = new Date(events[events.length - 1].createdAt).getTime();
   const lastTimestamp = new Date().getTime();
-  
-  for(let i=1; i<events.length - 2; i++) {
-    events[i].createdAt = new Date(getRandomInt(firstTimestamp, lastTimestamp)).toString();
-  }
-  events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const totalTime = lastTimestamp - firstTimestamp;
   const slotLength = totalTime / bars;
@@ -58,11 +97,10 @@ const buildHistogramData = (events: Event[], bars: number): HistogramInfo => {
     }
   }
 
-
-
   let maxValue = 0;
   for (let histogramItem of histogramData) {
     const count = histogramItem.events.length;
+
     //const success = histogramItem.events.filter(e => e.success).length;
     const success = getRandomInt(0, count);
     const failure = count - success;
@@ -74,8 +112,21 @@ const buildHistogramData = (events: Event[], bars: number): HistogramInfo => {
 
   return {
     items: histogramData,
+    yLegend: distributeElements(0, maxValue, 4).reverse(),
+    xLegend: distributeElements(firstTimestamp, lastTimestamp, 2),
     maxValue
   };
+}
+
+const distributeElements = (min: number, max: number, n: number) => {
+  const elements = [min];
+  const totalItems = max - min;
+  const interval = Math.floor(totalItems/(n - 1));
+  for (var i = 1; i < n - 1; i++) {
+      elements.push(min + (i * interval));
+  }
+  elements.push(max);
+  return elements;
 }
 
 const calculateHeight = (value: number, max: number) => {
@@ -85,45 +136,21 @@ const calculateHeight = (value: number, max: number) => {
   return (value * 100 / max) + 'px';
 }
 
-export const EventsHistogram = ({ events }: EventsLogProps) => {
+const mockSomeEvents = (events: Event[], repetition: number) => {
+  const firstTimestamp = new Date(events[events.length - 1].createdAt).getTime();
+  const lastTimestamp = new Date().getTime();
 
-  if(events !== null && events !== 'Loading') {
-
-    const bars = 35;
-    const repetition = 22;
-
-    const tempEvents: Event[] = [];
-    for(let i=0; i<repetition; i++) {
-      for(let e of events) {
-        tempEvents.push({...e});
-      }
+  const tempEvents: Event[] = [];
+  for(let i=0; i<repetition; i++) {
+    for(let e of events) {
+      tempEvents.push({...e});
     }
-
-    const histogramInfo = buildHistogramData(tempEvents, bars);
-
-    return (
-      <Box display="flex" height="150px" padding="10px" border="1px solid #ccc">
-        <Box display="flex" flexDirection="column" marginTop="auto" marginRight="20px" height="100%" justifyContent="space-between">
-          <p style={{margin: 0}}>75</p>
-          <p style={{margin: 0}}>50</p>
-          <p style={{margin: 0}}>25</p>
-          <p style={{margin: 0}}>0</p>
-        </Box>
-        {
-          histogramInfo.items.map((bar, index) => (
-            <Box key={index} display="flex" flexDirection="column" marginTop="auto" width="100%">
-              {
-                bar.success > 0 && <Box style={{border: '1px solid #a7c7f9', backgroundColor: '#d2e3fc', borderTopLeftRadius: '5px', borderTopRightRadius: '5px'}} margin="1px 2px" height={calculateHeight(bar.success, histogramInfo.maxValue)}></Box>
-              }
-              {
-                bar.failure > 0 && <Box style={{border: '1px solid #c96c6d', backgroundColor: '#d93124', borderTopLeftRadius: bar.success === 0 ? '5px' : 0, borderTopRightRadius: bar.success === 0 ? '5px' : 0}} margin="1px 2px" height={calculateHeight(bar.failure, histogramInfo.maxValue)}></Box>
-              }
-            </Box>
-          ))
-        }
-      </Box>
-    )
   }
 
-  return <p>Histogram</p>;
+  for(let i=0; i<tempEvents.length; i++) {
+    tempEvents[i].createdAt = new Date(getRandomInt(firstTimestamp, lastTimestamp)).toString();
+  }
+
+  tempEvents.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return tempEvents;
 }

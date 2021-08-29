@@ -35,20 +35,21 @@ class Kisi {
         return this.client.get("events", { placeId, actorId, actorType, action: 'unlock'});
     }
 
-    async verifyAuthentication(): Promise<boolean> {
+    async verifyAuthentication(): Promise<string | null> {
         if(!this.client.client.defaults.headers.common['X-Login-Secret']) {
             const token = window.localStorage.getItem("token");
             if (token != null) {
                 this.client.setLoginSecret(token);
             } else {
-                return false;
+                return null;
             }
         }
         try {
-            await this.client.get("user");
-            return true;
+            const user = await this.client.get("user");
+            return user.id;
         } catch(e) {
-            return false;
+            window.localStorage.removeItem("token");
+            return null;
         }
     }
 
