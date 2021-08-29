@@ -5,14 +5,13 @@ import { Place, PlacePagination } from "../Types"
 
 type PlaceSelectorProps = {
     placePagination: PlacePagination;
+    selectedPlace: Place | null;
     handleSelectedPlace: Function;
 }
 
-export const PlaceSelector = ({ placePagination, handleSelectedPlace }: PlaceSelectorProps) => {
+export const PlaceSelector = ({ placePagination, selectedPlace, handleSelectedPlace }: PlaceSelectorProps) => {
     const classes = useStyles();
-    const [selectedPlace, updateSelectedPlace] = useState(null as unknown as Place);
     const handleChange = (place: Place) => {
-        updateSelectedPlace(place);
         handleSelectedPlace(place);
     };
 

@@ -3,13 +3,13 @@ import { Login } from './app/pages/Login';
 import { Main } from './app/pages/Main';
 
 function App() {
-  const userId = useLogin();
-  if (userId === undefined) {
+  const user = useLogin();
+  if (user === undefined) {
     return <p>.... Loading ....</p>
-  } else if (userId === null) {
+  } else if (user === null) {
     return ( <Login /> );
   } else {
-    return ( <Main userId={userId} /> );
+    return ( <Main user={user} /> );
   }
 }
 

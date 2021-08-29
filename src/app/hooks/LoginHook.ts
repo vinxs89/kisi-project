@@ -1,23 +1,24 @@
 import { useEffect, useState } from "react"
 import Kisi from '../KisiWrapper';
+import { User } from "../Types";
 
 export const useLogin = () => {
-  const [userId, setUserId] = useState(undefined as unknown as  string | null);
+  const [user, setUser] = useState(undefined as unknown as User | null);
 
   const notifyLogout = () => {
-    setUserId(null);
+    setUser(null);
   };
 
-  const notifyLogin = (userId: string) => {
-    setUserId(userId);
+  const notifyLogin = (user: User) => {
+    setUser(user);
   };
 
   useEffect(() => {
     Kisi.verifyAuthentication()
-      .then(setUserId)
+      .then(setUser)
       .catch(e => {
         console.error(e);
-        setUserId(null);
+        setUser(null);
       });
 
     Kisi.onLogout(notifyLogout);
@@ -29,5 +30,5 @@ export const useLogin = () => {
     }
   }, []);
 
-  return userId;
+  return user;
 }

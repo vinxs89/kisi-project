@@ -1,7 +1,7 @@
 import { Box, Button, Container } from "@material-ui/core";
 import { useEffect, useState } from "react";
 import { EventsLog } from "../components/EventsLog";
-import { Event, Lock, Place, PlacePagination } from "../Types";
+import { Event, Lock, Place, PlacePagination, User } from "../Types";
 import { PlaceSelector } from "../components/PlaceSelector";
 import { EventsHistogram } from "../components/EventsHistogram";
 import Kisi from '../KisiWrapper';
@@ -9,10 +9,10 @@ import { useStyles } from "../Styles";
 import { Locks } from "../components/Locks";
 
 type MainProps = {
-    userId: string;
+    user: User;
 }
 
-export const Main = ({userId}: MainProps) => {
+export const Main = ({user}: MainProps) => {
     const classes = useStyles();
     const [placePagination, updatePlacePagination] = useState('Loading' as unknown as PlacePagination | 'Loading');
     const [locks, updateLocks] = useState(null as unknown as Lock[] | null | 'Loading');
@@ -21,7 +21,7 @@ export const Main = ({userId}: MainProps) => {
 
     useEffect(() => {
         refreshPlaces();
-    }, [userId]);
+    }, [user]);
 
     useEffect(() => {
         if(!selectedPlace) {
@@ -34,6 +34,7 @@ export const Main = ({userId}: MainProps) => {
     }, [selectedPlace]);
 
     const refreshPlaces = () => {
+        updateSelectedPlace(null);
         updatePlacePagination('Loading');
         Kisi.getPlaces()
             .then(updatePlacePagination)
@@ -51,13 +52,17 @@ export const Main = ({userId}: MainProps) => {
 
     const refreshEvents = (placeId: string) => {
         updateEvents('Loading');
-        Kisi.getUnlockEvents(placeId, userId)
+        Kisi.getUnlockEvents(placeId, user.id)
             .then(updateEvents)
             .catch(console.error);
     }
 
     return (
         <Container>
+            <Box className={classes.section__title}>
+                <h4>Current User: {user.name}</h4>
+                <Button onClick={() => Kisi.logout()}>Logout</Button>
+            </Box>
             <Box className={classes.section__title}>
                 <h4>Places</h4>
                 <Button onClick={() => refreshPlaces()}>Refresh</Button>
@@ -66,7 +71,7 @@ export const Main = ({userId}: MainProps) => {
                 {
                 (placePagination === 'Loading') ? (<p>Loading...</p>)
                    : (placePagination.pagination.count === 0) ? (<p>No place to show, create one first</p>)
-                   : <PlaceSelector placePagination={placePagination} handleSelectedPlace={updateSelectedPlace} />
+                   : <PlaceSelector placePagination={placePagination} selectedPlace={selectedPlace} handleSelectedPlace={updateSelectedPlace} />
                 }
             </Box>
 

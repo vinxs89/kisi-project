@@ -1,4 +1,4 @@
-import { Login, PlacePagination, LockPagination } from "./Types";
+import { Login, PlacePagination, LockPagination, User } from "./Types";
 
 const KisiClient:any = require("kisi-client").default;
 
@@ -15,8 +15,14 @@ class Kisi {
     async login(email: string, password: string): Promise<Login> {
         const login = await this.client.signIn(email, password);
         window.localStorage.setItem("token", login.secret);
-        this.loginCallbacks.forEach(c => c.call(this));
+        this.loginCallbacks.forEach(c => c.call(this, login.user));
         return login;
+    }
+
+    async logout(): Promise<void> {
+        await this.client.signOut();
+        window.localStorage.removeItem("token");
+        this.logoutCallbacks.forEach(c => c.call(this,));
     }
 
     async getPlaces(): Promise<PlacePagination> {
@@ -35,7 +41,7 @@ class Kisi {
         return this.client.get("events", { placeId, actorId, actorType, action: 'unlock'});
     }
 
-    async verifyAuthentication(): Promise<string | null> {
+    async verifyAuthentication(): Promise<User | null> {
         if(!this.client.client.defaults.headers.common['X-Login-Secret']) {
             const token = window.localStorage.getItem("token");
             if (token != null) {
@@ -46,7 +52,7 @@ class Kisi {
         }
         try {
             const user = await this.client.get("user");
-            return user.id;
+            return user;
         } catch(e) {
             window.localStorage.removeItem("token");
             return null;
